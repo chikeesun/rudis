@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-21 23:27:34
+ * @LastEditTime: 2024-04-22 00:28:09
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -20,6 +20,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <string>
+
 
 int main(int argc, char **argv) {
   // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -62,9 +64,39 @@ int main(int argc, char **argv) {
   
   std::cout << "Waiting for a client to connect...\n";
   
-  accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  std::cout << "Client connected\n";
+  int client_fd = -1;
+  client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+  if(client_fd > 0){
+    std::cout << "Client connected\n";
+  }
   
+  while(true)
+  {
+    if(client_fd <= 0)
+    {
+      std::cerr << "Failed to accept connection\n";
+      break;
+    }
+
+    char buffer[1024] = {0};
+    if(recv(client_fd, buffer, 1024, 0) < 0)
+    {
+      std::cerr << "Failed to receive data from client\n";
+      break;
+    }
+    std::string received_data(buffer);
+    std::cout << "Received data: " << received_data << std::endl;
+
+    // int idx=0;
+    // idx = received_data.find(" ");
+    // std::string execute = received_data.substr(0, idx);
+    // std::string command = received_data.substr(idx+1, received_data.find(" "));
+    // std::cout << "Execute: " << execute << " "<< "Command: " << command << std::endl;
+
+    std::string resp = "+PONG\r\n";
+    send(client_fd, resp.c_str(), resp.length(), 0);
+  }
+
   close(server_fd);
 
   return 0;
