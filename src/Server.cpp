@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-23 00:00:27
+ * @LastEditTime: 2024-04-23 00:06:19
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
 
 void handle_client(int client_fd) {
   char buffer[1024] = {0};
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
   int client_addr_len = sizeof(client_addr);
 
   std::cout << "Waiting for a client to connect...\n";
-
+  std::vector<std::thread> threads;
   while (true) {
     int client_fd = -1;
     client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
@@ -99,14 +100,13 @@ int main(int argc, char **argv) {
     if (client_fd > 0) {
       std::cout << "Client connected\n";
     }
-
-    if (client_fd <= 0) {
-      std::cerr << "Failed to accept connection\n";
-      break;
-    }
-    std::thread t(handle_client, client_fd);
+    
+    threads.emplace_back(handle_client, client_fd);
   }
 
+  for(auto& t:threads){
+    t.join();
+  }
   close(server_fd);
 
   return 0;
