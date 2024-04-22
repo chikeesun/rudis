@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-22 23:42:15
+ * @LastEditTime: 2024-04-22 23:44:57
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -98,8 +98,6 @@ int main(int argc, char **argv) {
         send(client_fd, resp.c_str(), resp.length(), 0);
         l = idx + 4;
       }else{
-        std::string resp = "-ERR unknown command\r\n";
-        send(client_fd, resp.c_str(), resp.length(), 0);
         break;
       }
     }
