@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-23 00:06:19
+ * @LastEditTime: 2024-04-23 00:12:43
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -26,25 +26,27 @@
 
 void handle_client(int client_fd) {
   char buffer[1024] = {0};
-  if (recv(client_fd, buffer, 1024, 0) < 0) {
-    std::cerr << "Failed to receive data from client\n";
-    return;
-  }
-  std::string received_data(buffer);
-  std::cout << "Received data: " << received_data << std::endl;
-
-  size_t l = 0;
-  while (l < received_data.length()) {
-    std::string command;
-    int idx = received_data.find("ping", l);
-    if (idx != std::string::npos) {
-      command = received_data.substr(idx, 4);
-      std::cout << "Command: " << command << std::endl;
-      std::string resp = "+PONG\r\n";
-      send(client_fd, resp.c_str(), resp.length(), 0);
-      l = idx + 4;
-    } else {
+  while (true) {
+    if (recv(client_fd, buffer, 1024, 0) < 0) {
+      std::cerr << "Failed to receive data from client\n";
       break;
+    }
+    std::string received_data(buffer);
+    std::cout << "Received data: " << received_data << std::endl;
+
+    size_t l = 0;
+    while (l < received_data.length()) {
+      std::string command;
+      int idx = received_data.find("ping", l);
+      if (idx != std::string::npos) {
+        command = received_data.substr(idx, 4);
+        std::cout << "Command: " << command << std::endl;
+        std::string resp = "+PONG\r\n";
+        send(client_fd, resp.c_str(), resp.length(), 0);
+        l = idx + 4;
+      } else {
+        break;
+      }
     }
   }
 }
@@ -100,11 +102,11 @@ int main(int argc, char **argv) {
     if (client_fd > 0) {
       std::cout << "Client connected\n";
     }
-    
+
     threads.emplace_back(handle_client, client_fd);
   }
 
-  for(auto& t:threads){
+  for (auto &t : threads) {
     t.join();
   }
   close(server_fd);
