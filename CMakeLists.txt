@@ -5,4 +5,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SOURCE_FILES src/Server.cpp)
 
 add_executable(server ${SOURCE_FILES})
-target_link_libraries(server thread)
+target_link_libraries(server pthread)
