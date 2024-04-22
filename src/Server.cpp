@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-22 23:33:42
+ * @LastEditTime: 2024-04-22 23:42:15
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -91,11 +91,13 @@ int main(int argc, char **argv) {
     while (l < received_data.length()) {
       std::string command;
       int idx = received_data.find("ping", l);
-      command = received_data.substr(idx, 4);
-      std::cout << "Command: " << command << std::endl;
-      std::string resp = "+PONG\r\n";
-      send(client_fd, resp.c_str(), resp.length(), 0);
-      l = idx + 4;
+      if (idx != std::string::npos) {
+        command = received_data.substr(idx, 4);
+        std::cout << "Command: " << command << std::endl;
+        std::string resp = "+PONG\r\n";
+        send(client_fd, resp.c_str(), resp.length(), 0);
+        l = idx + 4;
+      }
     }
   }
 
