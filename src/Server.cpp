@@ -97,6 +97,10 @@ int main(int argc, char **argv) {
         std::string resp = "+PONG\r\n";
         send(client_fd, resp.c_str(), resp.length(), 0);
         l = idx + 4;
+      }else{
+        std::string resp = "-ERR unknown command\r\n";
+        send(client_fd, resp.c_str(), resp.length(), 0);
+        break;
       }
     }
   }
