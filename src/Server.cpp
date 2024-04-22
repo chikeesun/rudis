@@ -87,26 +87,15 @@ int main(int argc, char **argv) {
     std::string received_data(buffer);
     std::cout << "Received data: " << received_data << std::endl;
 
-    int l = 0, r = 0;
-    l = received_data.find_first_of("\"") + 1;
-    r = received_data.find_last_of("\"");
-    std::cout << l << " " << r << std::endl;
-
-    while (l < r) {
+    size_t l = 0;
+    while (l < received_data.length()) {
       std::string command;
-      int sep = received_data.find("\\n", l);
-      std::cout << sep << std::endl;
-      if (sep != std::string::npos) {
-        command = received_data.substr(l, sep - l);
-        l = sep + 2;
-      } else {
-        command = received_data.substr(l, r - l);
-        l = r;
-      }
+      int idx = received_data.find("ping", l);
+      command = received_data.substr(idx, 4);
       std::cout << "Command: " << command << std::endl;
-
       std::string resp = "+PONG\r\n";
       send(client_fd, resp.c_str(), resp.length(), 0);
+      l = idx + 4;
     }
   }
 
