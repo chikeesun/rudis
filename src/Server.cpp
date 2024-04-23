@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-23 22:00:27
+ * @LastEditTime: 2024-04-23 22:14:49
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -31,7 +31,18 @@ void handle_client(int client_fd) {
       std::cerr << "Failed to receive data from client\n";
       break;
     }
-    std::string resp = "+PONG\r\n";
+    std::string command(buffer);
+    std::string resp;
+    if (command.find("ping") != std::string::npos) {
+      resp = "+PONG\r\n";
+    } else if (command.find("echo") != std::string::npos) {
+      int idx = command.find("echo");
+      idx += 5;
+      while (command[idx] < 'a' || command[idx] > 'z') {
+        idx++;
+      }
+      resp = "+" + command.substr(idx, command.length() - idx - 2) + "\r\n";
+    }
     send(client_fd, resp.c_str(), resp.length(), 0);
   }
   close(client_fd);
