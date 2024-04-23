@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-23 22:14:49
+ * @LastEditTime: 2024-04-23 23:19:44
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -20,28 +20,68 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <string>
 #include <thread>
 #include <vector>
 
+std::map<std::string, std::string> data;
+
 void handle_client(int client_fd) {
   char buffer[1024] = {0};
+  std::string command;
+  std::string resp;
+
   while (true) {
-    if (recv(client_fd, buffer, 1024, 0) <= 0) {
+    int len = recv(client_fd, buffer, 1024, 0);
+    if (len <= 0) {
       std::cerr << "Failed to receive data from client\n";
       break;
     }
-    std::string command(buffer);
-    std::string resp;
-    if (command.find("ping") != std::string::npos) {
-      resp = "+PONG\r\n";
-    } else if (command.find("echo") != std::string::npos) {
-      int idx = command.find("echo");
-      idx += 5;
-      while (command[idx] < 'a' || command[idx] > 'z') {
-        idx++;
+    int idx = 0;
+    if(buffer[idx] != '*') continue;
+    idx += 1;
+    int i=idx;
+    while(buffer[i] != '\r'){
+      i++;
+    }
+    int num = std::stoi(std::string(buffer+idx, i-idx));
+    idx = i+2;
+    std::vector<std::string> commands;
+    for(int i=0; i<num;i++){
+      while(buffer[idx]!='$') idx++;
+      idx += 1;
+      int j=idx;
+      while(buffer[j] != '\r'){
+        j++;
       }
-      resp = "+" + command.substr(idx, command.length() - idx - 2) + "\r\n";
+      int method_len = std::stoi(std::string(buffer+idx, j-idx));
+      idx = j+2;
+      std::string method = std::string(buffer+idx, method_len);
+      idx += method_len+2;
+      commands.push_back(method);
+    }
+    std::string method = commands[0];
+    if (method == "ping") {
+      resp = "+PONG\r\n";
+    } else if (method == "echo") {
+      resp = "+" + commands[1] + "\r\n";
+    } else if (method == "set") {
+      idx += 2;
+      std::string key = commands[1];
+      std::string value = commands[2];
+      if (data.find(key) != data.end())
+        data[key] = value;
+      else
+        data.insert(std::pair<std::string, std::string>(key, value));
+      resp = "+OK\r\n";
+    } else if (method == "get") {
+      idx += 2;
+      std::string key = commands[1];
+      if (data.find(key) != data.end())
+        resp = "+" + data[key] + "\r\n";
+      else
+        resp = "$-1\r\n";
     }
     send(client_fd, resp.c_str(), resp.length(), 0);
   }
