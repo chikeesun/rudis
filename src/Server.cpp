@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-04-23 00:12:43
+ * @LastEditTime: 2024-04-23 22:00:27
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -27,28 +27,14 @@
 void handle_client(int client_fd) {
   char buffer[1024] = {0};
   while (true) {
-    if (recv(client_fd, buffer, 1024, 0) < 0) {
+    if (recv(client_fd, buffer, 1024, 0) <= 0) {
       std::cerr << "Failed to receive data from client\n";
       break;
     }
-    std::string received_data(buffer);
-    std::cout << "Received data: " << received_data << std::endl;
-
-    size_t l = 0;
-    while (l < received_data.length()) {
-      std::string command;
-      int idx = received_data.find("ping", l);
-      if (idx != std::string::npos) {
-        command = received_data.substr(idx, 4);
-        std::cout << "Command: " << command << std::endl;
-        std::string resp = "+PONG\r\n";
-        send(client_fd, resp.c_str(), resp.length(), 0);
-        l = idx + 4;
-      } else {
-        break;
-      }
-    }
+    std::string resp = "+PONG\r\n";
+    send(client_fd, resp.c_str(), resp.length(), 0);
   }
+  close(client_fd);
 }
 
 int main(int argc, char **argv) {
@@ -95,15 +81,17 @@ int main(int argc, char **argv) {
 
   std::cout << "Waiting for a client to connect...\n";
   std::vector<std::thread> threads;
+  int client_fd = -1;
+
   while (true) {
-    int client_fd = -1;
     client_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                        (socklen_t *)&client_addr_len);
     if (client_fd > 0) {
-      std::cout << "Client connected\n";
+      threads.emplace_back(std::thread(handle_client, client_fd));
+    } else {
+      std::cerr << "Failed to accept client connection\n";
+      break;
     }
-
-    threads.emplace_back(handle_client, client_fd);
   }
 
   for (auto &t : threads) {
