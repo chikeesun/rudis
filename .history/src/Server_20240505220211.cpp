@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-05-05 22:07:39
+ * @LastEditTime: 2024-05-05 21:48:48
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -122,12 +122,6 @@ void handle_client(int client_fd)
             else
                 resp = "$-1\r\n";
         }
-        else if(method == "INFO"){
-            std::string extra_args = commands[1];
-            if(extra_args == "replication"){
-                resp = "+role:master\r\n";
-            }
-        }
         send(client_fd, resp.c_str(), resp.length(), 0);
     }
     close(client_fd);
@@ -176,7 +170,7 @@ int main(int argc, char** argv)
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons(6379);
 
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) !=
         0)

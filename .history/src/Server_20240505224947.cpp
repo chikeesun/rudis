@@ -123,10 +123,7 @@ void handle_client(int client_fd)
                 resp = "$-1\r\n";
         }
         else if(method == "INFO"){
-            std::string extra_args = commands[1];
-            if(extra_args == "replication"){
-                resp = "+role:master\r\n";
-            }
+            
         }
         send(client_fd, resp.c_str(), resp.length(), 0);
     }

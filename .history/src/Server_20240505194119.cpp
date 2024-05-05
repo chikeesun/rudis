@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-05-05 22:07:39
+ * @LastEditTime: 2024-05-05 19:37:05
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -77,15 +77,15 @@ void handle_client(int client_fd)
         }
         std::string method = commands[0];
         std::cout<<method<<std::endl;
-        if (method == "PING")
+        if (method == "ping")
         {
             resp = "+PONG\r\n";
         }
-        else if (method == "ECHO")
+        else if (method == "echo")
         {
             resp = "+" + commands[1] + "\r\n";
         }
-        else if (method == "SET")
+        else if (method == "set")
         {
             idx += 2;
             std::string key = commands[1];
@@ -112,21 +112,14 @@ void handle_client(int client_fd)
             tm.addTimer(expire, [key]() { data.erase(key); });
             resp = "+OK\r\n";
         }
-        else if (method == "GET")
+        else if (method == "get")
         {
             idx += 2;
             std::string key = commands[1];
-            if (data.contains(key) && tm.getNextExpire() > 0){
+            if (data.find(key) != data.end())
                 resp = "+" + data[key] + "\r\n";
-            }
             else
                 resp = "$-1\r\n";
-        }
-        else if(method == "INFO"){
-            std::string extra_args = commands[1];
-            if(extra_args == "replication"){
-                resp = "+role:master\r\n";
-            }
         }
         send(client_fd, resp.c_str(), resp.length(), 0);
     }
@@ -139,21 +132,6 @@ int main(int argc, char** argv)
     // when running tests.
     std::cout << "Logs from your program will appear here!\n";
 
-    // argv
-    uint16_t port = 6379;
-    if(argc >= 2){
-        std::cout<<argv[1]<<std::endl;
-        int idx = 0;
-        while(argv[1][idx] == '-') idx++;
-        std::string para;
-        while(argv[1][idx] != '\0'){
-            para += argv[1][idx];
-            idx++;
-        }
-        if(para == "port"){
-            port = std::stoi(argv[2]);
-        }
-    }
     // Uncomment this block to pass the first stage
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -176,7 +154,7 @@ int main(int argc, char** argv)
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons(6379);
 
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) !=
         0)

@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-05-05 22:07:39
+ * @LastEditTime: 2024-05-03 00:25:16
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -54,7 +54,6 @@ void handle_client(int client_fd)
             i++;
         }
         int num = std::stoi(std::string(buffer + idx, i - idx));
-        std::cout<<"command num: "<<num<<std::endl;
         idx = i + 2;
         std::vector<std::string> commands;
         for (int i = 0; i < num; i++)
@@ -68,39 +67,34 @@ void handle_client(int client_fd)
                 j++;
             }
             int method_len = std::stoi(std::string(buffer + idx, j - idx));
-            std::cout<<"method len: "<<method_len<<std::endl;
             idx = j + 2;
             std::string method = std::string(buffer + idx, method_len);
-            std::cout<<"method: "<<method<<std::endl;
             idx += method_len + 2;
             commands.push_back(method);
         }
         std::string method = commands[0];
-        std::cout<<method<<std::endl;
-        if (method == "PING")
+        if (method == "ping")
         {
             resp = "+PONG\r\n";
         }
-        else if (method == "ECHO")
+        else if (method == "echo")
         {
             resp = "+" + commands[1] + "\r\n";
         }
-        else if (method == "SET")
+        else if (method == "set")
         {
             idx += 2;
             std::string key = commands[1];
             std::string value = commands[2];
             std::string extra_args;
             int expire = -1;
-            std::cout<<commands.size()<<std::endl;
             if (commands.size() > 3)
             {
                 std::string extra_args = commands[3];
-                std::cout<<extra_args<<std::endl;
                 if (extra_args == "px")
                 {
                     expire = std::stoi(commands[4]);
-                    std::cout << expire << std::endl;
+                    std::cout<<expire<<std::endl;
                 }
             }
             if (data.find(key) != data.end())
@@ -109,24 +103,17 @@ void handle_client(int client_fd)
             }
             else
                 data.insert(std::pair<std::string, std::string>(key, value));
-            tm.addTimer(expire, [key]() { data.erase(key); });
+            tm.addTi  mer(expire, [key]() { data.erase(key); });
             resp = "+OK\r\n";
         }
-        else if (method == "GET")
+        else if (method == "get")
         {
             idx += 2;
             std::string key = commands[1];
-            if (data.contains(key) && tm.getNextExpire() > 0){
+            if (data.find(key) != data.end())
                 resp = "+" + data[key] + "\r\n";
-            }
             else
                 resp = "$-1\r\n";
-        }
-        else if(method == "INFO"){
-            std::string extra_args = commands[1];
-            if(extra_args == "replication"){
-                resp = "+role:master\r\n";
-            }
         }
         send(client_fd, resp.c_str(), resp.length(), 0);
     }
@@ -139,21 +126,6 @@ int main(int argc, char** argv)
     // when running tests.
     std::cout << "Logs from your program will appear here!\n";
 
-    // argv
-    uint16_t port = 6379;
-    if(argc >= 2){
-        std::cout<<argv[1]<<std::endl;
-        int idx = 0;
-        while(argv[1][idx] == '-') idx++;
-        std::string para;
-        while(argv[1][idx] != '\0'){
-            para += argv[1][idx];
-            idx++;
-        }
-        if(para == "port"){
-            port = std::stoi(argv[2]);
-        }
-    }
     // Uncomment this block to pass the first stage
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -176,7 +148,7 @@ int main(int argc, char** argv)
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons(6379);
 
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) !=
         0)
@@ -205,7 +177,6 @@ int main(int argc, char** argv)
                            (socklen_t*)&client_addr_len);
         if (client_fd > 0)
         {
-            std::cout << "connect to client" << std::endl;
             threads.emplace_back(std::thread(handle_client, client_fd));
         }
         else

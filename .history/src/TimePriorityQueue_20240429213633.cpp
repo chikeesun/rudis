@@ -1,0 +1,22 @@
+#include "timer.hpp"
+#include "timer_manager.hpp"
+
+#include <sys/time.h>
+
+uint64_t getCurrentMillisecs(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+TimerManager::addTimer(int expire, std::function<void(void)> cb, void* args) {
+    if(expire <= 0) {
+        return nullptr;
+    }
+    uint64_t now = getCurrentMillisecs();
+
+    Timer* timer = new Timer(expire, cb, args);
+    m_timers.push(timer);
+    return timer;
+}
