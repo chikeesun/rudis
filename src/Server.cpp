@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-05-05 21:48:48
+ * @LastEditTime: 2024-05-05 22:07:39
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -133,6 +133,21 @@ int main(int argc, char** argv)
     // when running tests.
     std::cout << "Logs from your program will appear here!\n";
 
+    // argv
+    uint16_t port = 6379;
+    if(argc >= 2){
+        std::cout<<argv[1]<<std::endl;
+        int idx = 0;
+        while(argv[1][idx] == '-') idx++;
+        std::string para;
+        while(argv[1][idx] != '\0'){
+            para += argv[1][idx];
+            idx++;
+        }
+        if(para == "port"){
+            port = std::stoi(argv[2]);
+        }
+    }
     // Uncomment this block to pass the first stage
 
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -155,7 +170,7 @@ int main(int argc, char** argv)
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(6379);
+    server_addr.sin_port = htons(port);
 
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) !=
         0)
