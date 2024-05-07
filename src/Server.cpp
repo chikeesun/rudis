@@ -2,7 +2,7 @@
  * @Author: Chikee royallor@163.com
  * @Date: 2024-04-21 23:21:52
  * @LastEditors: Chikee royallor@163.com
- * @LastEditTime: 2024-05-05 22:07:39
+ * @LastEditTime: 2024-05-08 00:27:33
  * @FilePath: /codecrafters-redis-cpp/src/Server.cpp
  * @Copyright (c) 2024 by Robert Bosch GmbH. All rights reserved.
  * The reproduction, distribution and utilization of this file as
@@ -24,11 +24,13 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <algorithm>
 
 #include "timer_manager.hpp"
 
 std::map<std::string, std::string> data;
 TimerManager tm;
+bool is_slave = false;
 
 void handle_client(int client_fd)
 {
@@ -125,7 +127,10 @@ void handle_client(int client_fd)
         else if(method == "INFO"){
             std::string extra_args = commands[1];
             if(extra_args == "replication"){
-                resp = "+role:master\r\n";
+                if(is_slave)
+                    resp = "+role:slave\r\n";
+                else
+                    resp = "+role:master\r\n";
             }
         }
         send(client_fd, resp.c_str(), resp.length(), 0);
@@ -141,17 +146,24 @@ int main(int argc, char** argv)
 
     // argv
     uint16_t port = 6379;
-    if(argc >= 2){
-        std::cout<<argv[1]<<std::endl;
+    std::string master_host;
+    uint16_t master_port;
+    for(int i=1;i<argc;i++){
+        std::cout<<argv[i]<<std::endl;
         int idx = 0;
-        while(argv[1][idx] == '-') idx++;
+        while(argv[i][idx] == '-') idx++;
         std::string para;
-        while(argv[1][idx] != '\0'){
-            para += argv[1][idx];
+        while(argv[i][idx] != '\0'){
+            para += argv[i][idx];
             idx++;
         }
         if(para == "port"){
-            port = std::stoi(argv[2]);
+            port = std::stoi(argv[i+1]);
+        }
+        if(para == "replicaof"){
+            is_slave = true;
+            master_host = argv[i+1];
+            master_port = std::stoi(argv[i+2]);
         }
     }
     // Uncomment this block to pass the first stage
